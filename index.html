@@ -834,6 +834,9 @@
             text-transform: uppercase;
         }
     </style>
+
+    <!-- Vocabulary Dataset -->
+    <script src="vocab_data.js"></script>
 <base target="_blank">
 </head>
 <body>
@@ -966,6 +969,9 @@
                         </button>
                         <button class="btn btn-secondary" onclick="navigateTo('words')">
                             <span>📖</span> View All Words
+                        </button>
+                        <button class="btn btn-warning" onclick="loadVocabDataset()">
+                            <span>📚</span> Load 9000 Words Dataset
                         </button>
                     </div>
                     <div class="card">
@@ -1194,6 +1200,12 @@
                     </div>
                     <div class="card">
                         <div class="card-title">📥 Import Data</div>
+                    <div class="card">
+                        <div class="card-title">📚 Dataset Info</div>
+                        <p style="color:var(--text-light); font-size:0.875rem; margin-bottom:1rem;">View statistics about the built-in vocabulary dataset.</p>
+                        <button class="btn btn-primary" onclick="showDatasetStats()">📊 Show Dataset Statistics</button>
+                        <button class="btn btn-warning" onclick="loadVocabDataset()">📥 Load 9000 Words</button>
+                    </div>
                         <p style="color:var(--text-light); font-size:0.875rem; margin-bottom:1rem;">Import from Excel, CSV, or JSON files.</p>
                         <div class="file-input-wrapper">
                             <input type="file" id="import-file" accept=".xlsx,.csv,.json" onchange="importData(event)">
@@ -2408,6 +2420,82 @@
             if (now - lastTouchEnd <= 300) e.preventDefault();
             lastTouchEnd = now;
         }, false);
-    </script>
+    
+
+        // ==================== DATASET LOADER ====================
+        function loadVocabDataset() {
+            if (typeof VOCAB_DATA === 'undefined') {
+                showToast('Dataset not loaded. Please include vocab_data.js', 'error');
+                return;
+            }
+
+            if (!confirm('Load ' + VOCAB_DATA.length + ' vocabulary words? This will add to your existing words.')) return;
+
+            const words = getUserWords();
+            const existingIds = new Set(words.map(w => w.word.toLowerCase()));
+
+            let added = 0;
+            let skipped = 0;
+
+            VOCAB_DATA.forEach(function(vocab) {
+                if (existingIds.has(vocab.word.toLowerCase())) {
+                    skipped++;
+                    return;
+                }
+
+                const word = {
+                    id: Date.now() + Math.random(),
+                    word: vocab.word,
+                    pos: vocab.pos.toLowerCase(),
+                    definition: vocab.definition,
+                    category: vocab.category,
+                    sentence: vocab.sentence,
+                    synonym: vocab.synonym,
+                    difficulty: vocab.difficulty === 'B1' ? 'easy' : (vocab.difficulty === 'B2' ? 'medium' : 'hard'),
+                    notes: 'Imported from A2-C1 9000 Vocabulary dataset. Original difficulty: ' + vocab.difficulty,
+                    date: new Date().toISOString(),
+                    mastery: 0,
+                    reviews: 0,
+                    lastReview: null
+                };
+
+                words.push(word);
+                existingIds.add(vocab.word.toLowerCase());
+                added++;
+            });
+
+            saveUserWords(words);
+            updateDashboard();
+            renderWordsList();
+            updateCategoryFilters();
+            updateStreak();
+
+            showToast('Added ' + added + ' words! (Skipped ' + skipped + ' duplicates)', 'success');
+            createConfetti();
+        }
+
+        // ==================== DATASET STATS ====================
+        function showDatasetStats() {
+            if (typeof VocabData === 'undefined') {
+                showToast('Dataset not loaded', 'error');
+                return;
+            }
+
+            const stats = VocabData.getStats();
+            alert('📊 Vocabulary Dataset Stats\n\n' +
+                  'Total Words: ' + stats.total + '\n\n' +
+                  'By Difficulty:\n' +
+                  '  B1 (Easy): ' + stats.byDifficulty.B1 + '\n' +
+                  '  B2 (Medium): ' + stats.byDifficulty.B2 + '\n' +
+                  '  C1 (Hard): ' + stats.byDifficulty.C1 + '\n\n' +
+                  'By Category:\n' +
+                  '  Business: ' + stats.byCategory.Business + '\n' +
+                  '  General: ' + stats.byCategory.General + '\n' +
+                  '  Technology: ' + stats.byCategory.Technology + '\n' +
+                  '  Education: ' + stats.byCategory.Education + '\n' +
+                  '  Environment: ' + stats.byCategory.Environment + '\n' +
+                  '  Science: ' + stats.byCategory.Science);
+        }
+</script>
 </body>
 </html>
