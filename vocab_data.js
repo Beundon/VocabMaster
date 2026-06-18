@@ -1,7 +1,7 @@
 // VocabMaster - Built-in Vocabulary Database
 // 9000 words across A2-C1 levels
 
-window.vocabData = [
+const vocabDataset = [
   // ========== A2 LEVEL - Easy (2250 words) ==========
   
   // A2 General (300 words)
